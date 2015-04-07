@@ -51,11 +51,64 @@ OSGI模块启动时候，就会调用这个函数，其中Activate注解说明�
     ChannelPipelineFactory pfact =
                     new OpenflowPipelineFactory(this, null);
 这里将pipeline初始化为OpenFlowPipelineFactory，而在OpenFlowPipelineFactory中重写ChannelPipelineFactory接口的getPipeline方法。
-OpenflowPipelineFactory.getPipeline()
-这个方法作用：
+
+    @Override
+    public ChannelPipeline getPipeline() throws Exception {
+        OFChannelHandler handler = new OFChannelHandler(controller);
+
+        ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("ofmessagedecoder", new OFMessageDecoder());
+        pipeline.addLast("ofmessageencoder", new OFMessageEncoder());
+        pipeline.addLast("idle", idleHandler);
+        pipeline.addLast("timeout", readTimeoutHandler);
+        // XXX S ONOS: was 15 increased it to fix Issue #296
+        pipeline.addLast("handshaketimeout",
+                         new HandshakeTimeoutHandler(handler, timer, 60));
+        if (pipelineExecutor != null) {
+            pipeline.addLast("pipelineExecutor",
+                             new ExecutionHandler(pipelineExecutor));
+        }
+        pipeline.addLast("handler", handler);
+        return pipeline;
+    }
+OpenflowPipelineFactory.getPipeline()方法作用：
 为一个新的Channel创建一个新的ChannelPipeline，当一个server端的Channel接收到一个新的连接，我们会为每个新
 的接受了的连接创建一个新的子Channel。这个新的子Channel使用一个新的ChannelPipeline，这个新的ChannelPipeline
 由server端ChannelPipelineFactory的getPipeline创建。
+
+OFChannelHandler中主要关注复写SimpleChannelHandler类的channelConnected和messageReceived这两个方法，其中channelConnected用于处理Channel建立连接的ChannelStateEvent，messageReceived用于处理Channel接收到的MessageEvent。
+
+    @Override
+    public void channelConnected(ChannelHandlerContext ctx,
+            ChannelStateEvent e) throws Exception {
+        channel = e.getChannel();
+        log.info("New switch connection from {}",
+                channel.getRemoteAddress());
+        /*
+            hack to wait for the switch to tell us what it's
+            max version is. This is not spec compliant and should
+            be removed as soon as switches behave better.
+         */
+        //sendHandshakeHelloMessage();
+        setState(ChannelState.WAIT_HELLO);
+    }
+
+    @Override
+    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
+            throws Exception {
+        if (e.getMessage() instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<OFMessage> msglist = (List<OFMessage>) e.getMessage();
+
+
+            for (OFMessage ofm : msglist) {
+                // Do the actual packet processing
+                state.processOFMessage(this, ofm);
+            }
+        } else {
+            state.processOFMessage(this, (OFMessage) e.getMessage());
+        }
+    }
 
 ## 世界这么乱，装纯给谁看
 
