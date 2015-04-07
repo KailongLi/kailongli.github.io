@@ -167,7 +167,7 @@ public void messageReceived(ChannelHandlerContext ctx, MessageEvent e)
 
 <h2>控制器与交换机进行版本协商</h2>
 
-<p>在ChannelState为WAIT_HELLO状态下，控制器一旦收到OF Hello的消息，便会调用processOFHello方法，在这个方法中，进行版本协商，如果协商失败，控制器则会主动断开连接。从代码中可以看出：
+<p>在ChannelState为WAIT_HELLO状态下，控制器一旦收到OF Hello的消息，便会调用processOFHello方法，在这个方法中，进行<a href="http://flowgrammable.org/sdn/openflow/state-machine/" title="版本协商">版本协商</a>，如果协商失败，控制器则会主动断开连接。从代码中可以看出：
 <li>控制器目前只支持OF10和OF13协议</li>
 <li>检查版本bitmap来进行的代码还没开发</li></p>
 

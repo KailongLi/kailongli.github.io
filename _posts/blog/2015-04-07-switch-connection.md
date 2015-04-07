@@ -115,7 +115,7 @@ OFChannelHandler中主要关注复写SimpleChannelHandler类的channelConnected�
 在channelConnected方法中，控制器将自身的ChannelState设置为WAIT_HELLO，意为等待交换机发送hello消息，这种代码设计模式为[状态机模式][]。下一篇博客将详细分析ChannelState的状态机运转。接着在messageReceived方法中，对每个接收到的OF消息进行处理。到这里，交换机与控制器已经建立了TCP连接，接下来，将分析控制器和交换机握手的过程，即版本协商。
 
 ## 控制器与交换机进行版本协商
-在ChannelState为WAIT_HELLO状态下，控制器一旦收到OF Hello的消息，便会调用processOFHello方法，在这个方法中，进行版本协商，如果协商失败，控制器则会主动断开连接。从代码中可以看出：
+在ChannelState为WAIT_HELLO状态下，控制器一旦收到OF Hello的消息，便会调用processOFHello方法，在这个方法中，进行[版本协商][]，如果协商失败，控制器则会主动断开连接。从代码中可以看出：
 <li>控制器目前只支持OF10和OF13协议</li>
 <li>检查版本bitmap来进行的代码还没开发</li>
 
@@ -156,3 +156,4 @@ OFChannelHandler中主要关注复写SimpleChannelHandler类的channelConnected�
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"
+[版本协商]:http://flowgrammable.org/sdn/openflow/state-machine/ "版本协商"
