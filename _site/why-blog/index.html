@@ -1,4 +1,50 @@
-<h2>世界这么乱，装纯给谁看</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    * Author:         BeiYuu
+    -->
+    <meta charset="utf-8" />
+    <title>我为什么写博客？ | BeiYuu.com</title>
+    <meta name="author" content="KailongLi" />
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="KailongLi's Blog" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <link rel="stylesheet" href="/css/default.css" type="text/css" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="alternate" type="application/atom+xml" title="Recent Entries" href="/atom.xml" />
+    <script src="/js/jquery-1.7.1.min.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <div class="home-menu">
+        <div class="home-icon-con">
+            <a class="home-menu-icon" href="/">李开龙</a>
+            <a class="home-follow" href="#" title="Contact Me">+</a>
+        </div>
+        <div class="home-contact">
+            <a href="http://weibo.com/beiyuu/" target="_blank" style="margin-left:-5px;"><img src="http://www.weibo.com/favicon.ico" alt="" width="25"/></a>
+            <a href="http://www.douban.com/people/beiyuu/" target="_blank" style="text-align:center;"><img src="http://www.douban.com/favicon.ico" alt="" width="22"/></a>
+            <a href="http://instagram.com/beiyuu/" target="_blank" style="text-align:right"><img src="http://d36xtkk24g8jdx.cloudfront.net/bluebar/00c6602/images/ico/favicon.ico" alt="" width="22"/></a>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="/js/prettify/prettify.css" />
+<style type="text/css">
+    body { background:#e8e8e8; }
+    @media screen and (max-width: 750px){
+        body { background:#fff; }
+    }
+    @media screen and (max-width: 1020px){
+        body { background:#fff; }
+    }
+</style>
+
+<div id="content">
+    <div class="entry">
+        <h1 class="entry-title"><a href="/why-blog" title="我为什么写博客？">我为什么写博客？</a></h1>
+        <p class="entry-date">2011-12-18</p>
+        <h2>世界这么乱，装纯给谁看</h2>
 
 <p>写博客这个不知道几个“互联网世纪”前的东西，现在还有必要拿出来说吗？不想用太多的理论去说这个命题，先看看两个最近对我影响比较大的两个博客：</p>
 
@@ -94,3 +140,62 @@
 <p>写到这里，基本的点已经介绍完毕，看看Jekyll生成的博客页面，我心满意足，虽然文笔很烂，语句多不通顺，但是这是一个新的开始了，我觉得心灵都纯洁了不少，这不是发一条微博什么能带来的快乐。</p>
 
 <p>对于那些对上述技术不是很熟悉的童鞋来说，搭建起来可能还是需要花费些功夫的，我会在后面写一篇专门的教程，给有需要的人，等不及了的，可以自己研究下，<strong>生命在于折腾</strong>。</p>
+
+    </div>
+
+    <div class="sidenav">
+        <iframe width="100%" height="75" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=75&fansRow=2&ptype=1&speed=0&skin=5&isTitle=0&noborder=0&isWeibo=0&isFans=0&uid=1855270953&verifier=375b89d6&dpc=1"></iframe>
+    </div>
+
+    <div class="sidenav">
+        <h2>Blog</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/switch-connection">ONOS中控制器与交换机建立连接的过程</a></li>
+        
+            <li><a href="/github-pages">使用Github Pages建独立博客</a></li>
+        
+            <li><a href="/why-blog">我为什么写博客？</a></li>
+        
+        </ul>
+
+        <h2>Opinion</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/about-simplify">胡言乱语说简单</a></li>
+        
+        </ul>
+
+        <h2>Project</h2>
+        <ul class="artical-list">
+        
+            <li><a href="/tabby">Tabby</a></li>
+        
+            <li><a href="/notty-notes">Notty Notes</a></li>
+        
+            <li><a href="/overapi-cheatsheet">OverAPI</a></li>
+        
+            <li><a href="/raining-in-chrome">听雨</a></li>
+        
+        </ul>
+    </div>
+</div>
+
+<script src="/js/post.js" type="text/javascript"></script>
+
+
+    <script type="text/javascript">
+        $(function(){
+            $('.home-follow').click(function(e){
+                e.preventDefault();
+
+                if($('.home-contact').is(':visible')){
+                    $('.home-contact').slideUp(100);
+                }else{
+                    $('.home-contact').slideDown(100);
+                }
+            });
+        })
+    </script>
+</body>
+</html>
