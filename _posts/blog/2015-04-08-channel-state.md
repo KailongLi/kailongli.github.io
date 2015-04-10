@@ -94,8 +94,10 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 </ul>
 对于第一个问题：注释已经说得很明白，在各个状态下收到的OF消息中，有些OF消息有默认的处理方法，而有些OF消息则没有默认的处理方法。
 
-对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO extends ChannelState，查看资料看到：
+对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO extends ChannelState，并且WAIT_HELLO是static final修饰的。
 
+## 状态机各个状态变化分析
+![channel state machine](/images/githubpages/channel state machine.png)
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"

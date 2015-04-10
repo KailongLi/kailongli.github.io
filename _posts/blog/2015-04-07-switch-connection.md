@@ -92,7 +92,9 @@ OpenflowPipelineFactory.getPipeline()方法作用：
 在ChannelPipeline中，有idleHandler、readTimeoutHandler、HandshakeTimeoutHandler和handler这四个handler，其中
 前三个handler用于超时处理，而第四个handler用于捕获这些超时产生的idleStateEvent(OFChannelHandler.channelIdle:
 发送EchoRequest消息，OF心跳包)、readTimeoutException(OFChannelHandler.exceptionCaught：记录日志，关闭连接)、
-HandshakeException(OFChannelHandler.exceptionCaught：记录日志，关闭连接)。接下来分析这几个超时的设置：在初始化idleHandler的参数，this.idleHandler = new IdleStateHandler(timer, 20, 25, 0); 其中20表示读超时，意味着如果20秒内没有读到客户端发送的OF消息，则发送idleStateEvent给后面的handler处理，handler收到idleStateEvent之后，发送EchoRequest消息，这个消息是OF协议的心跳包。25表示如果25秒内没有发送OF消息给客户端，则触发同样的操作。this.readTimeoutHandler = new ReadTimeoutHandler(timer, 30);其中30表示如果30秒内没有读到OF消息，则抛出一个readTimeoutException给后面的handler处理，处理方法是断开连接。HandshakeTimeoutHandler(handler, timer, 60)，其中60意味着60需要完成握手过程，否则也是断开连接。由20和30这两个数字表明：如果20秒内没有收到心跳包，则控制器发送一个心跳包，交换机返回一个心跳包，控制器必须在30秒内必须收到回包，因此这意味着一个心跳周期最多不能超过10秒。![channel timeout analysis](/images/githubpages/channel timeout analysis.png)
+HandshakeException(OFChannelHandler.exceptionCaught：记录日志，关闭连接)。
+
+接下来分析这几个超时的设置：在初始化idleHandler的参数，this.idleHandler = new IdleStateHandler(timer, 20, 25, 0); 其中20表示读超时，意味着如果20秒内没有读到客户端发送的OF消息，则发送idleStateEvent给后面的handler处理，handler收到idleStateEvent之后，发送EchoRequest消息，这个消息是OF协议的心跳包。25表示如果25秒内没有发送OF消息给客户端，则触发同样的操作。this.readTimeoutHandler = new ReadTimeoutHandler(timer, 30);其中30表示如果30秒内没有读到OF消息，则抛出一个readTimeoutException给后面的handler处理，处理方法是断开连接。HandshakeTimeoutHandler(handler, timer, 60)，其中60意味着60需要完成握手过程，否则也是断开连接。由20和30这两个数字表明：如果20秒内没有收到心跳包，则控制器发送一个心跳包，交换机返回一个心跳包，控制器必须在30秒内必须收到回包，因此这意味着一个心跳周期最多不能超过10秒。![channel timeout analysis](/images/githubpages/channel timeout analysis.png)
 
 OFChannelHandler中主要关注复写SimpleChannelHandler类的channelConnected和messageReceived这两个方法，其中channelConnected用于处理Channel建立连接的ChannelStateEvent，messageReceived用于处理Channel接收到的MessageEvent。
 
