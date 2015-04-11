@@ -6,6 +6,7 @@ description: 分析代码中交换机与控制器建立连接的过程，始于�
 ---
 
 控制器与交换机建立连接的过程主要分为三个阶段：控制器启动监听6633端口、交换机与控制器建立连接、控制器与交换机版本协商。
+![switch connection established](/images/githubpages/switch-connection-established.png)
 
 ## 控制器启动监听6633端口
 
@@ -168,8 +169,7 @@ OFChannelHandler中主要关注复写SimpleChannelHandler类的channelConnected�
         h.setState(WAIT_FEATURES_REPLY);
     }
 
-最后附上整个模块的调用图：
-![switch connection established](/images/githubpages/switch-connection-established.png)
+
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"

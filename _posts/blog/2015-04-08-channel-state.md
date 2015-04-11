@@ -99,6 +99,14 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 ## 状态机各个状态变化分析
 ![channel state machine](/images/githubpages/channel state machine.png)
 
+上面这张图channel状态机的流转图，下面将解释这张图的含义。
+
+在ChannelState为INIT状态下，交换机与控制器还没有建立连接，在这个状态下，收到的任何OF消息都是不正常的。由于processOFError和processOFPortStatus这两个方法是定义的abstract，所以这两个方法必须复写。对于收到其他的OF消息，统一采用默认的处理illegalMessageReceived(h, m)。
+
+在ChannelState为WAIT_HELLO状态下，控制器主要处理接收到的OFHello消息，进行版本协商过程。在OFChannelHandler.channelConnected方法中，控制器注释了发送OFHello消息的代码，而只是等待交换机主动发送OFHello消息，这样做的好处是简化流程，避免一些可能出现的异常场景，这也是需要交换机在与控制器建立连接后，能够主动发送OFHello消息的能力。处理OFHello消息的具体流程如下图
+![WAIT_HELLO_processOFHello](/images/githubpages/WAIT_HELLO_processOFHello.png)
+除了OFHello消息之外，如果收到来自交换机的Asynchronous消息(PacketIn/FlowRemoved/PortStatus)，这是有可能的，因为OF通道建立好了之后，交换机状态发生变化，那么就会发送这些Asynchronous消息给控制器，但是控制器收到之后处理不了，因为控制器还没有和交换机握手成功了；如果收到来自交换机的Symmetric消息（Error）
+
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"
 [版本协商]:http://flowgrammable.org/sdn/openflow/state-machine/ "版本协商"
