@@ -94,7 +94,7 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 </ul>
 对于第一个问题：注释已经说得很明白，在各个状态下收到的OF消息中，有些OF消息有默认的处理方法，而有些OF消息则没有默认的处理方法。
 
-对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO extends ChannelState，并且WAIT_HELLO是static final修饰的。
+对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO(enum实例)像一个独特的类，并且WAIT_HELLO extends ChannelState。《JAVA编程思想》里描述：编译器不允许我们将一个enum实例当做class类型，因为每个enum元素（WAIT_HELLO）是一个ChannelState类型的static final实例，同时，由于它们是static实例，无法方位外部类的非static元素或方法，所以对于内部的enum实例而言，其行为与一般的内部类并不相同。除了实现abstract方法以外，程序员还可以覆盖常量相关的方法。
 
 ## 状态机各个状态变化分析
 ![channel state machine](/images/githubpages/channel state machine.png)
@@ -105,7 +105,9 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 
 在ChannelState为WAIT_HELLO状态下，控制器主要处理接收到的OFHello消息，进行版本协商过程。在OFChannelHandler.channelConnected方法中，控制器注释了发送OFHello消息的代码，而只是等待交换机主动发送OFHello消息，这样做的好处是简化流程，避免一些可能出现的异常场景，这也是需要交换机在与控制器建立连接后，能够主动发送OFHello消息的能力。处理OFHello消息的具体流程如下图
 ![WAIT_HELLO_processOFHello](/images/githubpages/WAIT_HELLO_processOFHello.png)
-除了OFHello消息之外，如果收到来自交换机的Asynchronous消息(PacketIn/FlowRemoved/PortStatus)，这是有可能的，因为OF通道建立好了之后，交换机状态发生变化，那么就会发送这些Asynchronous消息给控制器，但是控制器收到之后处理不了，因为控制器还没有和交换机握手成功了；如果收到来自交换机的Symmetric消息（Error）
+除了OFHello消息之外，如果收到来自交换机的Asynchronous消息(PacketIn/FlowRemoved/PortStatus)，这是有可能的，因为OF通道建立好了之后，交换机状态发生变化，那么就会发送这些Asynchronous消息给控制器，但是控制器收到之后处理不了，因为控制器还没有和交换机握手成功了；如果收到来自交换机的Symmetric消息OFError，直接断开连接；如果收到来自交换机的Symmetric消息OFEchoRequest，则相应地回OFEchoReply；如果收到来自交换机的Symmetric消息OFEchoReply，控制器什么都不处理；如果收到Controller-to-Switch信息（OFFeaturesReply和OFStatisticsReply），则断开连接。
+
+
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"
