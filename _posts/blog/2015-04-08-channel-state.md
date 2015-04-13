@@ -94,7 +94,7 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 </ul>
 对于第一个问题：注释已经说得很明白，在各个状态下收到的OF消息中，有些OF消息有默认的处理方法，而有些OF消息则没有默认的处理方法。
 
-对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO(enum实例)像一个独特的类，并且WAIT_HELLO extends ChannelState。《JAVA编程思想》里描述：编译器不允许我们将一个enum实例当做class类型，因为每个enum元素（WAIT_HELLO）是一个ChannelState类型的static final实例，同时，由于它们是static实例，无法方位外部类的非static元素或方法，所以对于内部的enum实例而言，其行为与一般的内部类并不相同。除了实现abstract方法以外，程序员还可以覆盖常量相关的方法。
+对于第二个问题：采用倒推的思路，在什么情况下可以复写非abstract方法呢？答案是一个类extends另外一个类。于是，可以得出WAIT_HELLO(enum实例)像一个独特的类，并且WAIT_HELLO extends ChannelState。《JAVA编程思想》里描述：编译器不允许我们将一个enum实例当做class类型，因为每个enum元素（WAIT_HELLO）是一个ChannelState类型的static final实例，同时，由于它们是static实例，无法访问外部类的非static元素或方法，所以对于内部的enum实例而言，其行为与一般的内部类并不相同。除了实现abstract方法以外，程序员还可以覆盖常量相关的方法。
 
 ## 状态机各个状态变化分析
 ![channel state machine](/images/githubpages/channel state machine.png)
@@ -109,6 +109,15 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 
 在ChannelState为WAIT_FEATURES状态下，控制器主要处理接收到的OFFeaturesReply消息，一是获取DPID，二是将OFFeaturesReply消息暂存起来，以供后期判断交换机类型，获取相应的交换机实例。处理OFFeaturesReply消息的具体流程如下图
 ![WAIT_FEATURES_REPLY_processOFFeaturesReply](/images/githubpages/WAIT_FEATURES_REPLY_processOFFeaturesReply.png)
+对于OF10协议，先要下发Controller-to-Switch类型的OFSetConfig消息（消息中的miss_send_len为OFPCML_NO_BUFFER,即0xffff），其目的是让交换机能够上报完整的packet_in报文，注意：这里上报到控制器的packet_in报文是指没有用output action到OFPP_CONTROLLER的场景；然后下发Controller-to-Switch类型的OFBarrierRequest消息，保证OFSetConfig消息先下发完成；最后下发OFGetConfigRequest消息，由于前面使用OFBarrierRequest消息，这保证了OFSetConfig消息一定在OFGetConfigRequest消息前下发完成，因此在这三条消息下发完成之后，进入WAIT_CONFIG_REPLY状态，等待接收OFGetConfigReply消息，当接收到了OFGetConfigReply消息，查看OFSetConfig消息中设置的字段OFPCML_NO_BUFFER,即0xffff是否成功。
+
+* 收获：控制器给交换机下发的配置消息，如何检验是否下发成功？对于交换机能够回复的消息，那么等待交换机回复的消息来确认控制器给交换机下发的消息是否成功；对于交换机不回复的，则采用OFBarrierRequest来保证控制器下发的消息完成，然后下发查询消息，等待交换机回复消息，再来确认控制器下发的配置消息是否成功。
+
+对于OF13协议，下发OFPortDescRequest消息，然后将控制器的状态设置为WAIT_PORT_DESC_REPLY，在WAIT_PORT_DESC_REPLY中处理流程如下：
+![WAIT_PORT_DESC_REPLY_processOFStatisticsReply](/images/githubpages/WAIT_PORT_DESC_REPLY_processOFStatisticsReply.png)
+最后回到了WAIT_CONFIG_REPLY，对比OF_13比OF_10多了一个WAIT_PORT_DESC_REPLY的状态，是因为控制器要暂存OFStatsReply消息，以便后续根据OFStatsReply消息的mfr_desc(Manufacturer description)和hw_desc（Hardware description）判断该交换机是Open vSwitch还是其他硬件交换机。
+
+
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"
