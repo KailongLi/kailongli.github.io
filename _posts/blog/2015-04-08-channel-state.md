@@ -107,7 +107,8 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 ![WAIT_HELLO_processOFHello](/images/githubpages/WAIT_HELLO_processOFHello.png)
 除了OFHello消息之外，如果收到来自交换机的Asynchronous消息(PacketIn/FlowRemoved/PortStatus)，这是有可能的，因为OF通道建立好了之后，交换机状态发生变化，那么就会发送这些Asynchronous消息给控制器，但是控制器收到之后处理不了，因为控制器还没有和交换机握手成功了；如果收到来自交换机的Symmetric消息OFError，直接断开连接；如果收到来自交换机的Symmetric消息OFEchoRequest，则相应地回OFEchoReply；如果收到来自交换机的Symmetric消息OFEchoReply，控制器什么都不处理；如果收到Controller-to-Switch信息（OFFeaturesReply和OFStatisticsReply），则断开连接。
 
-
+在ChannelState为WAIT_FEATURES状态下，控制器主要处理接收到的OFFeaturesReply消息，一是获取DPID，二是将OFFeaturesReply消息暂存起来，以供后期判断交换机类型，获取相应的交换机实例。处理OFFeaturesReply消息的具体流程如下图
+![WAIT_FEATURES_REPLY_processOFFeaturesReply](/images/githubpages/WAIT_FEATURES_REPLY_processOFFeaturesReply.png)
 
 [netty]:http://www.importnew.com/7669.html "netty"
 [状态机模式]:http://www.importnew.com/7669.html "状态机模式"
