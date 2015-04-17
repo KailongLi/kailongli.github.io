@@ -7,13 +7,18 @@ description: ONOS控制器与交换机建立连接之后，通过OF消息的交�
 
 首先介绍代码是如何走到消息处理的方法，然后分析分发消息的规则的代码的结构和语法，最后分析这样设计代码的好处。
 
+## 代码如何走到消息处理的方法
+
 ![dispatch message function](/images/githubpages/dispatch message function.png)
 
 <li>① OFChannelHandler在Channel状态WAIT_DESCRIPTION_STAT_REPLY中调用Controller类的getOFSwitchInstance方法来获取交换机实例;</li>
 <li>② Controller类的getOFSwitchInstance方法，则调用DriverManager的静态方法getSwitch来获取不同厂家实现的交换机实例，获取的原则是基于OFDescStatsReply消息中的“厂家信息”和“硬件信息”。注意：在实例化交换机之后，将OpenFlowAgent实例赋给了该交换机，其中OpenFlowAgent实例的产生是在OpenFlowControllerImpl类的内部类OpenFlowSwitchAgent类实例化的，见⑤。</li>
 <li>③ 这里的driver意味着对接不同厂家的OF交换机，上图只是列出了少数几种OF交换机，例如：支持OF_13的OVS，OF_10的OVS和光的OF交换机</li>
 <li>④ 这里的OF交换机都继承了AbstractOpenFlowSwitch的handleMessage方法，而handleMessage方法调用了就是agent的processMessage方法，然后processMessage方法调用了processPacket方法，在processPacket方法中，就是处理消息分发的分发口</li>
-## 状态机代码的结构和语法分析
+
+## 分析分发消息的规则的代码的结构和语法
+
+![packet processor](/images/githubpages/packet processor.png)
 
 控制器启动的入口函数为
 
