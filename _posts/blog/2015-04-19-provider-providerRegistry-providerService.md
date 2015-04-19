@@ -28,7 +28,7 @@ description: ONOS控制器与交换机建立连接之后，通过OF消息的交�
 
 当收到OFStatsReply消息时，根据其消息类型来进行分类处理：
 
-<li>如果类型为PortDesc，通知OpenFlowSwitchLister的switchChanged方法；</li>
+<li>如果类型为`PortDesc`，通知OpenFlowSwitchLister的switchChanged方法；</li>
 <li>如果类型为Flow，首先构造OFFlowStateReply消息，然后调用OpenFlowEventListener的handleMessage来处理这个消息；</li>
 <li>如果类型为Group，首先构造 OFGroupStatsReply 消息，然后调用OpenFlowEventListener的handleMessage来处理这个消息；</li>
 <li>如果类型为GROUP_DESC，首先构造 OFGroupDescStatsReply 消息，然后调用OpenFlowEventListener的handleMessage来处理这个消息；</li>
@@ -95,7 +95,7 @@ OpenFlowPacketProvider 类的属性 controller 实例化 OpenFlowController，�
             processor.process(context);
         }
     }
-这种代码的结构（红色部分）类似于 South-OF Layer 到 Provider Layer 的跨层调用结构（紫色部分），这里将不再赘述。这种代码的结构最大的好处就是层间解耦。
+这种代码的结构（红色部分）类似于 South-OF Layer 到 Provider Layer 的跨层调用结构（紫色部分），这里将不再赘述。
 
 #### App Layer
 在 App Layer 中，提供了两个 APP 作为例子来说明第二个问题，对于同一个 OF 消息，各个 APP 处理的先后顺序，在 addProcessor 方法中，除了添加各个 APP 的 processor 之外，还有另外一个属性，那就是优先级，用来处理调用顺序的问题。在 ProxyArp 这个 APP 中，优先级为 PacketProcessor.ADVISOR_MAX + 1 

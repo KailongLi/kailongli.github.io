@@ -130,7 +130,3 @@ description: 分析代码中Channel状态机，状态的变化范围从控制器
 
 
 
-
-[netty]:http://www.importnew.com/7669.html "netty"
-[状态机模式]:http://www.importnew.com/7669.html "状态机模式"
-[版本协商]:http://flowgrammable.org/sdn/openflow/state-machine/ "版本协商"
