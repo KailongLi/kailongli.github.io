@@ -2,10 +2,10 @@
 layout:     post
 title:      ONOS中收到OF消息后，分发消息流程分析
 category: blog
-description: ONOS控制器与交换机建立连接之后，通过OF消息的交互，达到了Channel状态机的稳定状态，这时候收到OF消息之后，将分发消息到各个模块处理。
+description: ONOS控制器与交换机建立连接之后，通过OF消息的交互，达到了Channel状态机的稳定状态，这时候收到OF消息之后，将分发消息到各个APP处理。
 ---
 
-首先介绍代码是如何走到消息处理的方法，然后分析分发消息的规则的代码的结构和语法，最后分析这样设计代码的好处。
+首先介绍代码是如何走到消息处理的 APP ，然后分析分发消息的规则的代码的结构和语法。
 
 ## 代码如何走到消息处理的方法
 
@@ -83,7 +83,7 @@ OpenFlowPacketProvider 类的属性 controller 实例化 OpenFlowController，�
                         inPkt, outPkt, pktCtx.isHandled(), pktCtx);
         providerService.processPacket(corePktCtx);
     }
-发现最后还是调用 providerService 的 processPacket 方法，在 OpenFlowPacketProvider 启动的时候， `providerService = providerRegistry.register(this);` 这里涉及到 `provider` 、`providerRegistry` 和 `providerService` 这三个概念，它们主要为了管理 `provider` ，下篇博客将详细讲解它的机制。就现在这种情况， providerRegistry 实例化为 PacketManager ， providerService 实例化为 PacketManager 的内部类 InternalPacketProviderService ，而这两个类属于 Core Layer，因此，调用的 InternalPacketProviderService 的 processPacket 方法。
+发现最后还是调用 providerService 的 processPacket 方法，在 OpenFlowPacketProvider 启动的时候， `providerService = providerRegistry.register(this);` 这里涉及到 `provider` 、`providerRegistry` 和 `providerService` 这三个概念，它们主要为了管理 `provider` ，下篇博客[ONOS 南向抽象层分析](http://kailongli.github.io/provider-providerRegistry-providerService/)将详细讲解它的机制。就现在这种情况， providerRegistry 实例化为 PacketManager ， providerService 实例化为 PacketManager 的内部类 InternalPacketProviderService ，而这两个类属于 Core Layer，因此，调用的 InternalPacketProviderService 的 processPacket 方法。
 
 #### Core Layer
 在 InternalPacketProviderService 的 processPacket 方法中，遍历 processors 容器中所有的 PacketProcessor 的 process 方法来处理。

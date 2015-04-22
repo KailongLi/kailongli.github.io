@@ -44,7 +44,7 @@
     <div class="entry">
         <h1 class="entry-title"><a href="/dispatch-message" title="ONOS中收到OF消息后，分发消息流程分析">ONOS中收到OF消息后，分发消息流程分析</a></h1>
         <p class="entry-date">2015-04-16</p>
-        <p>首先介绍代码是如何走到消息处理的方法，然后分析分发消息的规则的代码的结构和语法，最后分析这样设计代码的好处。</p>
+        <p>首先介绍代码是如何走到消息处理的 APP ，然后分析分发消息的规则的代码的结构和语法。</p>
 
 <h2>代码如何走到消息处理的方法</h2>
 
@@ -136,7 +136,7 @@ public void handlePacket(OpenFlowPacketContext pktCtx) {
 }
 </code></pre>
 
-<p>发现最后还是调用 providerService 的 processPacket 方法，在 OpenFlowPacketProvider 启动的时候， <code>providerService = providerRegistry.register(this);</code> 这里涉及到 <code>provider</code> 、<code>providerRegistry</code> 和 <code>providerService</code> 这三个概念，它们主要为了管理 <code>provider</code> ，下篇博客将详细讲解它的机制。就现在这种情况， providerRegistry 实例化为 PacketManager ， providerService 实例化为 PacketManager 的内部类 InternalPacketProviderService ，而这两个类属于 Core Layer，因此，调用的 InternalPacketProviderService 的 processPacket 方法。</p>
+<p>发现最后还是调用 providerService 的 processPacket 方法，在 OpenFlowPacketProvider 启动的时候， <code>providerService = providerRegistry.register(this);</code> 这里涉及到 <code>provider</code> 、<code>providerRegistry</code> 和 <code>providerService</code> 这三个概念，它们主要为了管理 <code>provider</code> ，下篇博客<a href="http://kailongli.github.io/provider-providerRegistry-providerService/">ONOS 南向抽象层分析</a>将详细讲解它的机制。就现在这种情况， providerRegistry 实例化为 PacketManager ， providerService 实例化为 PacketManager 的内部类 InternalPacketProviderService ，而这两个类属于 Core Layer，因此，调用的 InternalPacketProviderService 的 processPacket 方法。</p>
 
 <h4>Core Layer</h4>
 
@@ -177,7 +177,7 @@ public void processPacket(PacketContext context) {
         <h2>Blog</h2>
         <ul class="artical-list">
         
-            <li><a href="/provider-providerRegistry-providerService">ONOS 中南向抽象层分析</a></li>
+            <li><a href="/provider-providerRegistry-providerService">ONOS 南向抽象层分析</a></li>
         
             <li><a href="/dispatch-message">ONOS中收到OF消息后，分发消息流程分析</a></li>
         
