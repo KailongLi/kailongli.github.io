@@ -36,7 +36,7 @@ South-OF Layer 和 Provider Layer 之间、Core Layer 和 App Layer 之间的解
         ……
     }
 
-其中感知则是通过 OpenFlowDeviceProvider 的内部类 InternalDeviceProvider 来体现的，我们可以看到 InternalDeviceProvider 实现南向OF协议层的两个接口 OpenFlowSwitchListener, OpenFlowEventListener 这两个接口，来监听南向的 OpenFlow 的消息，最后无缝地转化到抽象的 `providerService` 方法。以添加交换机为例：
+其中感知则是通过 OpenFlowDeviceProvider 的内部类 InternalDeviceProvider 来体现的，我们可以看到 InternalDeviceProvider 实现南向OF协议层的两个接口 OpenFlowSwitchListener, OpenFlowEventListener 这两个接口，来监听南向的 OpenFlow 的消息，最后无缝地转化到抽象的 `providerService` 方法。以感知交换机端口为例：
 南向协议层对应的是 OpenFlowSwitchListener 的  public void portChanged(Dpid dpid, OFPortStatus status); 在 InternalDeviceProvider 类中，转为抽象的 `providerService` 方法 void portStatusChanged(DeviceId deviceId, PortDescription portDescription); 区别是 portChanged 方法只针对 OpenFlow 消息，而 portStatusChanged 方法则是与协议无关的处理，既可以是感知的 OpenFlow 消息，又可以是 netconf 消息，又或者是 ovsdb 消息。
 
     @Override
