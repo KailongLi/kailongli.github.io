@@ -1,13 +1,24 @@
 ---
 layout:     post
-title:      ONOS中收到OF消息后，分发消息流程分析
+title:      ONOS 中南向抽象层分析
 category: blog
-description: ONOS控制器与交换机建立连接之后，通过OF消息的交互，达到了Channel状态机的稳定状态，这时候收到OF消息之后，将分发消息到各个模块处理。
+description: 南向抽象层由网络组件构成，例如交换机、主机或是链路。ONOS的南向抽象层将每个网络组件表示为通用格式的对象。通过这个抽象层，分布式核心可以维护网络组件的状态，并且不需要知道底层设备的具体细节。
 ---
 
-首先介绍代码是如何走到消息处理的方法，然后分析分发消息的规则的代码的结构和语法，最后分析这样设计代码的好处。
+首先引用[ONOS白皮书中篇之ONOS架构][]中描述的一段话作为开篇，南向抽象层由网络组件构成，例如交换机、主机或是链路。ONOS的南向抽象层将每个网络组件表示为通用格式的对象。通过这个抽象层，分布式核心可以维护网络组件的状态，并且不需要知道底层设备的具体细节。总之，分布式核心可以实现南向接口协议和设备无感知。这个网络组件抽象层允许添加新设备和协议，以可插拔的形式支持扩展，插件根据规格映射（或翻译）通用网络组件描述或操控设备，反之亦然。所以，南向接口确保ONOS控管多个不同的设备，即使它们使用不同的协议（OpenFlow、NetConf等）。
 
-## 代码如何走到消息处理的方法
+南向接口的分层结构如图3所示，最底层是网络设备，ONOS通过协议与设备连接，协议细节被网络组件插件或适配器屏蔽。事实上，南向接口的核心是在不知道具体协议细节和网络组件的条件下维护网络组件对象（设备、主机、链路）。通过适配层API，分布式核心可以与网络组件对象状态保持一致，适配层API将分布式核心与协议细节和网络组件相隔离。
+
+![onos-whitepaper-03-onos-layers](/images/githubpages/onos-whitepaper-03-onos-layers.png)
+
+<ul> 南向抽象层的主要优势包括：
+<li>用不同的协议管理不同的设备，不会对分布式核心造成影响。</li>
+<li>扩展性强，可以在系统中添加新的设备和协议。</li>
+<li>轻松地从传统设备转移到支持OpenFlow的白牌设备。</li>
+</ul>
+
+## 代码如何实现抽象层分析
+就之前分析的代码来看
 
 ![dispatch message function](/images/githubpages/dispatch message function.png)
 
@@ -108,6 +119,6 @@ OpenFlowPacketProvider 类的属性 controller 实例化 OpenFlowController，�
 
 
 
-
+[ONOS白皮书中篇之ONOS架构]:http://www.sdnlab.com/6800.html "ONOS白皮书中篇之ONOS架构"
 [HashMap]:http://stackoverflow.com/questions/24372257/implementing-priority-queue-using-hashmap "HashMap"
 

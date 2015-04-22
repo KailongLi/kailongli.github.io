@@ -54,7 +54,7 @@ OpenFlowPacketProvider 类的属性 controller 实例化 OpenFlowController，�
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected OpenFlowController controller;
-然后在 OpenFlowPacketProvider 启动的时候，将实例化的 listener 加入到 ofPacketListener 容器中。
+然后在 OpenFlowPacketProvider 启动的时候，将实例化的 listener 加入到 ofPacketListener 容器中，这里需要注意两点：1. addPacketListener 方法有个优先级， ofPacketListener 的类型是 Multimap<Integer, PacketListener> ，这种 collection 是 google 的开源项目 [guava](http://ifeve.com/google-guava-newcollectiontypes/) ， 其优先级由数字保证，数字越低，优先级越高，与 map 不同，对于同优先级，后面的值不会覆盖前面的值，而是同时存在，这时候优先级是谁先插入，谁的优先级更高。 2. controller 并“没有实例化”，而直接使用，为什么不会报空指针异常呢？这是因为 [OSGI](https://osgi.org/download/r4-v4.2-cmpn-draft-20090310.pdf) 的作用，在 OpenFlowControllerImpl 类的最上面，使用了@Component(immediate = true) @Service这两个注解，表明 OpenFlowControllerImpl 用来提供服务，然后在 OpenFlowPacketProvider 类中采用 @Reference 来建立对 OpenFlowControllerImpl 用来提供服务的引用。
 
     @Activate
     public void activate() {
