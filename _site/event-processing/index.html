@@ -52,13 +52,19 @@
 
 <p>上面的图有些小，请见谅。事件处理的流程如下：</p>
 
-<p>①DeviceManager启动时调用EventDeliveryService的addSink方法将处理DeviceEvent的EventSink (AbstractListenerRegistry)添加进来。<br/>
-②CoreEventDispatcher启动时一直不停地从Event队列中，取事件，然后根据事件的类的类型，来获取相应的EventSink，然后调用eventSink 的process方法来处理事件，这是消费者部分。<br/>
-③BgpRouter的内部类InnerDeviceListener实现DeviceListener，主要为了实现处理event的event方法。<br/>
-④BgpRouter调用DeviceService接口的addListener方法来将InnerDeviceListener实例添加进来。<br/>
-⑤DeviceManager实现DeviceService接口的addListener方法，调用AbstractListenerRegistry类的addListener方法，将InnerDeviceListener放入一个listeners集合中。<br/>
-⑥DeviceManager类的内部类InternalDeviceProviderService，感知到Device消息后，调用EventDispatcher接口的post(Event)方法来投递事件。注意在EventDispatcher接口的实现类CoreEventDispatcher中实现post方法，只是将event添加到Event队列中，至此，生产-消费者模式的生产部分已经完成。<br/>
-⑦结合②，eventSink的process方法遍历所有的listeners集合，调用listener的event方法，也就是BgpRouter的内部类实现的event方法。</p>
+<p>①DeviceManager启动时调用EventDeliveryService的addSink方法将处理DeviceEvent的EventSink (AbstractListenerRegistry)添加进来。</p>
+
+<p>②CoreEventDispatcher启动时一直不停地从Event队列中，取事件，然后根据事件的类的类型，来获取相应的EventSink，然后调用eventSink 的process方法来处理事件，这是消费者部分。</p>
+
+<p>③BgpRouter的内部类InnerDeviceListener实现DeviceListener，主要为了实现处理event的event方法。</p>
+
+<p>④BgpRouter调用DeviceService接口的addListener方法来将InnerDeviceListener实例添加进来。</p>
+
+<p>⑤DeviceManager实现DeviceService接口的addListener方法，调用AbstractListenerRegistry类的addListener方法，将InnerDeviceListener放入一个listeners集合中。</p>
+
+<p>⑥DeviceManager类的内部类InternalDeviceProviderService，感知到Device消息后，调用EventDispatcher接口的post(Event)方法来投递事件。注意在EventDispatcher接口的实现类CoreEventDispatcher中实现post方法，只是将event添加到Event队列中，至此，生产-消费者模式的生产部分已经完成。</p>
+
+<p>⑦结合②，eventSink的process方法遍历所有的listeners集合，调用listener的event方法，也就是BgpRouter的内部类实现的event方法。</p>
 
 <h2>各个模块的含义</h2>
 
@@ -141,11 +147,9 @@ public &lt;E extends Event&gt; void addSink(Class&lt;E&gt; eventClass, EventSink
         <h2>Blog</h2>
         <ul class="artical-list">
         
-            <li><a href="/raft-copycat">ONOS 强一致性算法raft的java实现版copycat说明</a></li>
-        
             <li><a href="/of-master-slave">ONOS OpenFlow控制器主备角色分析</a></li>
         
-            <li><a href="/distribute-features1">ONOS 强一致性算法raft的java实现半copycat代码分析之leader election</a></li>
+            <li><a href="/distribute-features1">ONOS 分布式学习（一）</a></li>
         
             <li><a href="/event-processing">ONOS 事件处理机制</a></li>
         
