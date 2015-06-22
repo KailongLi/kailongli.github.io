@@ -34,9 +34,10 @@ EventListener 接口中，只提供了一个 event 方法，它用来对特定�
 
 如果没有内部类提供的、可以继承多个具体的或抽象的类的能力，一些设计与编程问题就很难解决。从这个角度看，内部类使得多重继承的解决方案变得完整。接口解决了部分问题，而内部类有效地实现了“多重继承”。也就是说，内部类允许继承多个非接口类型。举个例子：在 TopologyMetrics 这个类中，假如它需要同时监听 Device 接口和 Host 接口，那么它需要实现 DeviceListener 和 HostListener 这两个接口，而这两个接口都拥有同样的方法 event ，如果仅用外部类来实现这两个接口，那么一个 event 方法会覆盖另外一个 event 方法，因此只能用内部类，来独立地实现某个接口。
 
-总结 EventListener<E extends Event> 的作用：
-* 它给其他特定事件接口（例如DeviceEventListener）来继承出特定的 EventListener；
-* 继承出来的接口给不同APP来实现，override event 方法，来实现对 event 的特定处理。
+总结 EventListener<E extends Event> 的作用： 
+
+* 它给其他特定事件接口（例如DeviceEventListener）来继承出特定的 EventListener；  
+* 继承出来的接口给不同APP来实现，override event 方法，来实现对 event 的特定处理。  
 
 #### EventSink 
 EventSink主要提供处理特定事件类型处理方法的能力，在ONOS代码中只有 AbstractListenerRegistry 实现 EventSink 接口。注意 AbstractListenerRegistry 是一个泛型类，
@@ -47,10 +48,11 @@ EventSink主要提供处理特定事件类型处理方法的能力，在ONOS代�
 
 在 AbstractListenerRegistry 类中，实现事件处理的 process 方法实际上是调用了 EventListener 的 event 方法，具体的做法是遍历 EventListener 集合中所有的 listener ，EventListener集合即 EventListener Sink，因此 AbstractListenerRegistry 类还需要提供将其他 listener 添加到 EventListener Sink 中的方法 addListener , 注意对于特定类型的事件， EventListener 集合为特定类型的 EventListener 集合。
 
-总结 EventSink （AbstractListenerRegistry）的作用：
-* 为不同的事件提供 EventSink 的模板；
-* EventSink 提供往 EventListener Sink 中添加 EventListener 的方法；
-* 封装 EventListener Sink 中所有 EventListener 处理 event 的方法。
+总结 EventSink （AbstractListenerRegistry）的作用：  
+
+* 为不同的事件提供 EventSink 的模板；  
+* EventSink 提供往 EventListener Sink 中添加 EventListener 的方法；  
+* 封装 EventListener Sink 中所有 EventListener 处理 event 的方法。  
 
 #### EventDeliveryService 
 EventDeliveryService 、EventDispatcher 、 EventSinkRegistry 这三个接口的关系如下：
@@ -73,9 +75,10 @@ EventDeliveryService 继承了 EventDispatcher 和 EventSinkRegistry 的作用�
 
 由最上的类图可知： 事件处理机制的核心 CoreEventDispatcher 实现了接口 EventDeliveryService 和继承了 EventSinkRegistry 接口的默认实现  DefaultEventSinkRegistry ，它采用的是生产-消费者模式， post 方法用来将事件添加到事件队列，作为生产者一部分，另外内部类 DispatchLoop 类，不停地从事件队列中取出事件来进行处理，作为消费者一部分。
 
-总结 EventDeliveryService（ CoreEventDispatcher ）的作用：
-* 提供EventSink注册机制；
-* 作为事件处理机制的核心，实现生产-消费者模式。
+总结 EventDeliveryService（ CoreEventDispatcher ）的作用：  
+
+* 提供EventSink注册机制；  
+* 作为事件处理机制的核心，实现生产-消费者模式。  
 
 经过以上分析，总结出事件对象模型关系：
 ![event model](/images/githubpages/event model.png)

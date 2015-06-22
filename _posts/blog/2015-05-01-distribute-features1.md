@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      ONOS 强一致性算法raft的java实现半copycat代码分析之leader election
+title:      ONOS 强一致性算法raft的java实现版copycat代码分析之leader election
 category: blog
 description: ONOS中强一致性算法raft的java版实现采用的是copycat，它包括leader election、 Log replication 、 Cluster membership changes 、 Log compaction 这四个特性，本文主要介绍其中最常用也是最简单的 leader election。
 ---
@@ -42,7 +42,10 @@ Chapter 6 Concurrency Enhancements
 关于java 8 这些新（黑）特（科）性（技）的加入，变化较大，同时带来的争议也较大，例如：在接口中增加默认方法和静态方法，它的主要一个动机是扩展原来的API，因此需要在之前版本的接口中增加方法，但是按照java的规则，其所有实现类必须要实现该方法，这样太麻烦，于是想出了默认方法（在接口中直接实现该方法），该接口的实现类就不用再实现该方法了，这明显改变了java接口的规则。
 
 ## copycat 中 Leader election 的实现
-在开始分析 copycat 中 Leader election 实现代码之前，建议阅读[copycat][]的描述，有助于理解 Resource, Log, Cluster 等名词含义。
+在开始分析 copycat 中 Leader election 实现代码之前，建议阅读[copycat][]的描述，有助于理解 Resource, Log, Cluster 等名词含义。为了确保大家看的代码都是一样的，需要将代码切换到 commit hash 为 d597c723ffe9dbbee2aa22f4bd68d8174410e054 的版本。
+
+    git reset --hard d597c723ffe9dbbee2aa22f4bd68d8174410e054
+
 copycat 代码中提供了一个关于 Leader election 的例子 (LeaderElectingVerticle 类的 start 方法)，根据这个例子，梳理 Leader election 的具体流程。
 
 #### 前期准备条件
@@ -105,6 +108,43 @@ copycat 代码中提供了一个关于 Leader election 的例子 (LeaderElecting
           .addShutdownTask(coordinator::close);
     }
 它是整个LeaderElection的核心代码，根据前期准备的 ClusterConfig 来实例化 ClusterCoordinator ，ClusterCoordinator 负责 Cluster 中各个 members 间的消息通信调度的核心，
+
+    public DefaultClusterCoordinator(CoordinatorConfig config) {
+      this.config = config.copy();
+      this.executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+
+      // Set up permanent cluster members based on the given cluster configuration.
+      this.localMember = new DefaultLocalMemberCoordinator(new MemberInfo(config.getClusterConfig().getLocalMember(), config.getClusterConfig().getMembers().contains(config.getClusterConfig().getLocalMember()) ? Member.Type.ACTIVE : Member.Type.PASSIVE, Member.Status.ALIVE), config.getClusterConfig().getProtocol(), Executors.newSingleThreadExecutor(threadFactory));
+      this.members.put(config.getClusterConfig().getLocalMember(), localMember);
+      for (String member : config.getClusterConfig().getMembers()) {
+        if (!this.members.containsKey(member)) {
+          this.members.put(member, new DefaultRemoteMemberCoordinator(new MemberInfo(member, Member.Type.ACTIVE, Member.Status.ALIVE), config.getClusterConfig().getProtocol(), Executors.newSingleThreadScheduledExecutor(threadFactory)));
+        }
+      }
+
+      // Set up the global Raft state context and cluster.
+      CoordinatedResourceConfig resourceConfig = new CoordinatedResourceConfig()
+        .withElectionTimeout(config.getClusterConfig().getElectionTimeout())
+        .withHeartbeatInterval(config.getClusterConfig().getHeartbeatInterval())
+        .withReplicas(config.getClusterConfig().getMembers())
+        .withLog(new BufferedLog());
+      ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("copycat-coordinator"));
+      this.context = new RaftContext(config.getName(), config.getClusterConfig().getLocalMember(), new RaftConfig(resourceConfig.toMap()), executor);
+      this.cluster = new CoordinatorCluster(0, this, context, new ResourceRouter(executor), new KryoSerializer(), executor, config.getExecutor());
+    }
+
+在 ClusterCoordinator 构造函数中，实例化了 localMember ，在初始化 localMember 的类型的时候，是根据配置文件中所有的 members 是否包含 localMember ， `config.getClusterConfig().getMembers().contains(config.getClusterConfig().getLocalMember()) ? Member.Type.ACTIVE : Member.Type.PASSIVE`  member 的类型主要有两个用途：  
+
+* 指示了该 member 加入或者离开 cluster 的时候，集群中其他 members 的行为， ACTIVE member 加入或者离开会对 resource 的可用性有影响，而 PASSIVE 可以随意的加入或者离开。  
+* 指示了该 member 如何参与 log replication ， ACTIVE 具有投票的权利，而 PASSIVE 没有， 在 log replication 的时候， ACTIVE 参与 raft 协议的 log replication 的全过程，而 PASSIVE 仅仅只是接受 committed log entries 通过 gossip 协议。  
+
+实例化完 localMember 后，初始化其他 members ，其他的 members 都是 remoteMembers  
+紧接着实例化 RaftContext 和 CoordinatorCluster ，其中， ClusterCoordinator 是集群中每个节点的核心，它提供两个两个方法： `Cluster cluster();` 和 `<T extends Resource<T>> T getResource(String name);` ，因此它需要维护两个资源： Cluster 和 Resource ，那么这两个其中 RaftContext 是 raft 协议实现的核心， 它提供 RaftProtocol 接口来进行 Raft 协议中定义的各种操作，每个操作都提供发送方的 操作方法 `CompletableFuture<SyncResponse> sync(SyncRequest request)` 和接收方的注册 handler `RaftProtocol syncHandler(MessageHandler<SyncRequest, SyncResponse> handler);`。 CoordinatorCluster 
+
+> 边界使得你可以在用于泛型的参数类型上设置限制条件，尽管这使得你可以强制规定泛型可以应用的类型，但是其潜在的一个更加重要的效果是你可以按照自己的边界类型来调用方法。
+
+
+
 
 
 
