@@ -152,6 +152,50 @@ copycat 代码中提供了一个关于 Leader election 的例子 (LeaderElecting
 实例化完 localMember 后，初始化其他 members ，其他的 members 都是 remoteMembers  
 紧接着实例化 RaftContext 和 CoordinatorCluster ，其中， ClusterCoordinator 是集群中每个节点的核心，它提供两个两个方法： `Cluster cluster();` 和 `<T extends Resource<T>> T getResource(String name);` ，因此它需要维护两个资源： Cluster 和 Resource ，换句话说： 维护 Cluster 表明 ClusterCoordinator 控制着 localMember 到 remoteMembers 的连接，以及整个 Cluster 的成员信息；维护 Resource 表明 ClusterCoordinator 控制着 Resource 信息，另外， Resource 接口也提供获取 Cluster 的方法，因此，这意味着每个 Resource 都有自己的 Cluster ， 有可能不同的 Resource 的 Cluster 不同。 RaftContext 是 raft 协议实现的核心， 它提供 RaftProtocol 接口来进行 Raft 协议中定义的各种操作，每个操作都提供发送方的 操作方法 `CompletableFuture<SyncResponse> sync(SyncRequest request)` 和接收方的注册 handler `RaftProtocol syncHandler(MessageHandler<SyncRequest, SyncResponse> handler);`。 
 
+初始化完 ClusterCoordinator 之后，开始为 LeaderElection 这个 Resource 添加 addStartupTask 和 addShutdownTask ，首先分析获取 getResource ，代码如下：
+ 
+    public <T extends Resource<T>> T getResource(String name, CoordinatedResourceConfig config) {
+      ResourceHolder resource = resources.computeIfAbsent(name, n -> {
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("copycat-" + name + "-%d"));
+        RaftContext state = new RaftContext(name, member().uri(), new RaftConfig(config.toMap()), executor);
+        ClusterManager cluster = new CoordinatedCluster(name.hashCode(), this, state, new ResourceRouter(executor), config.getSerializer(), executor, config.getExecutor());
+        ResourceManager context = new ResourceManager(name, config, cluster, state, this);
+        try {
+          return new ResourceHolder(config.getResourceType().getConstructor(ResourceManager.class).newInstance(context), cluster, state);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+          throw new ConfigurationException("Failed to instantiate resource", e);
+        }
+      });
+      return (T) resource.resource;
+    }
+
+computeIfAbsent 为 Java 8 中新增的 concurrentHashMap 方法，它的意思是，如果 Map 中 key 值不存在，那么，根据其提供的 Lambda 函数来生成 value ，因为之前并没有往 resources 中添加 "election" 的 key ，因此， 这里是重新计算的 value ，并且返回它。注意 lambda 表达式中 n 表示 key ，它并没有在后面的代码块中起作用，但是它必须写，从本质上讲，这里的 lambda 表达式（函数）就是函数接口 (Function<T, R>) 的定义， 函数接口中一共有四个方法，其中三个是不需要定义的，即两个 default 方法和一个 static 方法，因此只需要定义 `R apply(T t);` 即可，而 lambda 函数就是定义该方法，而该方法有入参 `T t` ，因此 lambda 函数也必须有个入参 n。
+
+    default V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        ……
+    }
+
+    @FunctionalInterface
+    public interface Function<T, R> {   
+        R apply(T t);
+        
+        default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
+            Objects.requireNonNull(before);
+            return (V v) -> apply(before.apply(v));
+        }
+       
+        default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) {
+            Objects.requireNonNull(after);
+            return (T t) -> after.apply(apply(t));
+        }
+        
+        static <T> Function<T, T> identity() {
+            return t -> t;
+        }
+    }
+
+
+这里也是去定义 RaftContext, ClusterManager, ResourceManager
 > 边界使得你可以在用于泛型的参数类型上设置限制条件，尽管这使得你可以强制规定泛型可以应用的类型，但是其潜在的一个更加重要的效果是你可以按照自己的边界类型来调用方法。
 
 
