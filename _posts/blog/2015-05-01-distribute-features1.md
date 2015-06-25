@@ -150,7 +150,7 @@ copycat 代码中提供了一个关于 Leader election 的例子 (LeaderElecting
 * 指示了该 member 如何参与 log replication ， ACTIVE 具有投票的权利，而 PASSIVE 没有， 在 log replication 的时候， ACTIVE 参与 raft 协议的 log replication 的全过程，而 PASSIVE 仅仅只是接受 committed log entries 通过 gossip 协议。  
 
 实例化完 localMember 后，初始化其他 members ，其他的 members 都是 remoteMembers  
-紧接着实例化 RaftContext 和 CoordinatorCluster ，其中， ClusterCoordinator 是集群中每个节点的核心，它提供两个两个方法： `Cluster cluster();` 和 `<T extends Resource<T>> T getResource(String name);` ，因此它需要维护两个资源： Cluster 和 Resource ，换句话说： 维护 Cluster 表明 ClusterCoordinator 控制着 localMember 到 remoteMembers 的连接，以及整个 Cluster 的成员信息；维护 Resource 表明 ClusterCoordinator 控制着 Resource 信息，另外， Resource 接口也提供获取 Cluster 的方法，因此，这意味着每个 Resource 都有自己的 Cluster ， 有可能不同的 Resource 的 Cluster 不同。 RaftContext 是 raft 协议实现的核心， 它提供 RaftProtocol 接口来进行 Raft 协议中定义的各种操作，每个操作都提供发送方的 操作方法 `CompletableFuture<SyncResponse> sync(SyncRequest request)` 和接收方的注册 handler `RaftProtocol syncHandler(MessageHandler<SyncRequest, SyncResponse> handler);`。 
+紧接着实例化 RaftContext 和 CoordinatorCluster ，其中， 关于CoordinatorCluster， CoordinatorCluster 的本质是 Cluster ， ClusterCoordinator 是集群中每个节点的核心，它提供两个两个方法： `Cluster cluster();` 和 `<T extends Resource<T>> T getResource(String name);` ，因此它需要维护两个资源： Cluster 和 Resource ，换句话说： 维护 Cluster 表明 ClusterCoordinator 控制着 localMember 到 remoteMembers 的连接，以及整个 Cluster 的成员信息；维护 Resource 表明 ClusterCoordinator 控制着 Resource 信息，另外， Resource 接口也提供获取 Cluster 的方法，因此，这意味着每个 Resource 都有自己的 Cluster ， 有可能不同的 Resource 的 Cluster 不同。 RaftContext 是 raft 协议实现的核心， 它提供 RaftProtocol 接口来进行 Raft 协议中定义的各种操作，每个操作都提供发送方的 操作方法 `CompletableFuture<SyncResponse> sync(SyncRequest request)` 和接收方的注册 handler `RaftProtocol syncHandler(MessageHandler<SyncRequest, SyncResponse> handler);`。 
 
 初始化完 ClusterCoordinator 之后，开始为 LeaderElection 这个 Resource 添加 addStartupTask 和 addShutdownTask ，首先分析获取 getResource ，代码如下：
  
@@ -195,7 +195,70 @@ computeIfAbsent 为 Java 8 中新增的 concurrentHashMap 方法，它的意思�
     }
 
 
-这里也是去定义 RaftContext, ClusterManager, ResourceManager
+lambda 代码块内也是去定义 RaftContext, ClusterManager, ResourceManager ，最后返回 `ResourceHolder` 的第一个参数是 `new DefaultLeaderElection(context)` 
+
+添加 StartUpTask ，lambda 表达式 `() -> coordinator.open().thenApply(v -> null)` 实现的是 Task<T> 函数接口，表明该Task最终返回的是 `CompletableFuture<Void>` ：
+
+    public T addStartupTask(Task<CompletableFuture<Void>> task) {
+      startupTasks.add(task);
+      return (T) this;
+    }
+    @FunctionalInterface
+    public interface Task<T> extends Serializable {
+      /**
+       * Executes the task.
+       * @return The task result.
+       */
+      T execute();
+    }
+
+接下来，看看 open 方法：
+
+    public synchronized CompletableFuture<ClusterCoordinator> open() {
+      if (open) {
+        return CompletableFuture.completedFuture(null);
+      }
+
+      CompletableFuture<MemberCoordinator>[] futures = new CompletableFuture[members.size()];
+      int i = 0;
+      for (MemberCoordinator member : members.values()) {
+        futures[i++] = member.open();
+      }
+      return CompletableFuture.allOf(futures)
+        .thenRun(() -> cluster.addMembershipListener(this::handleMembershipEvent))
+        .thenComposeAsync(v -> cluster.open(), executor)
+        .thenComposeAsync(v -> context.open(), executor)
+        .thenRun(() -> open = true)
+        .thenApply(v -> this);
+    }
+
+这里先初始化 `CompletableFuture<MemberCoordinator>[]` , 然后遍历所有的 members ， 这里的 member 包括 localMember 和 remoteMember ，调用其 open 方法，返回的结果存入数组中，（这里用数组，难道不担心集群成员信息会变化吗？）。
+
+    // super
+    @Override
+    public CompletableFuture<MemberCoordinator> open() {
+      open = true;
+      return CompletableFuture.completedFuture(this);
+    }
+
+    // localMember
+    @Override
+    public synchronized CompletableFuture<MemberCoordinator> open() {
+      return super.open()
+        .thenComposeAsync(v -> server.listen(), executor)
+        .thenRun(() -> server.handler(this::handle))
+        .thenApply(v -> this);
+    }
+
+    // localMember
+    @Override
+    public synchronized CompletableFuture<MemberCoordinator> open() {
+      return super.open().thenComposeAsync(v -> connect(), executor).thenApply(v -> this);
+    }
+
+
+
+
 > 边界使得你可以在用于泛型的参数类型上设置限制条件，尽管这使得你可以强制规定泛型可以应用的类型，但是其潜在的一个更加重要的效果是你可以按照自己的边界类型来调用方法。
 
 
