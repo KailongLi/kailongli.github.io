@@ -118,7 +118,8 @@ copycat 代码中提供了一个关于 Leader election 的例子 (LeaderElecting
           .addStartupTask(() -> coordinator.open().thenApply(v -> null))
           .addShutdownTask(coordinator::close);
     }
-它是整个LeaderElection的核心代码，根据前期准备的 ClusterConfig 来实例化 ClusterCoordinator ，ClusterCoordinator 负责 Cluster 中各个 members 间的消息通信调度的核心，
+它是整个LeaderElection的核心代码，根据前期准备的 ClusterConfig 来实例化 ClusterCoordinator ，ClusterCoordinator 负责 Cluster 中各个 members 间的消息通信调度的核心，初始化集群信息，本质上就是去定义 server 和 client ; 如下图， localMember(server) remoteMembers(clients) 
+![cluster-config](/images/githubpages/cluster-config.png)
 
     public DefaultClusterCoordinator(CoordinatorConfig config) {
       this.config = config.copy();
@@ -232,7 +233,8 @@ lambda 代码块内也是去定义 RaftContext, ClusterManager, ResourceManager 
         .thenApply(v -> this);
     }
 
-这里先初始化 `CompletableFuture<MemberCoordinator>[]` , 然后遍历所有的 members ， 这里的 member 包括 localMember 和 remoteMember ，调用其 open 方法，返回的结果存入数组中，（这里用数组，难道不担心集群成员信息会变化吗？）。
+这里先初始化 `CompletableFuture<MemberCoordinator>[]` , 然后遍历所有的 members ， 这里的 member 包括 localMember 和 remoteMember ，调用其 open 方法，返回的结果存入数组中，（这里用数组，难道不担心集群成员个数会变化吗？）。 open 本质上是去建立连接的过程，如下表示实例1的 open 过程，对于 localMember(server) 来说，它表示启动监听；对于 remoteMembers(clients) 来说，它表示建立与 server 间的连接。
+![cluster-start-up](/images/githubpages/cluster-start-up.png)
 
     // super
     @Override
@@ -256,6 +258,18 @@ lambda 代码块内也是去定义 RaftContext, ClusterManager, ResourceManager 
       return super.open().thenComposeAsync(v -> connect(), executor).thenApply(v -> this);
     }
 
+对于 localMember ， 另起一个线程来运行服务端监听，当收到来自客户端的消息时，调用 handler （也就是这里的 handle 函数）处理来自客户端的请求，最后返回 localMemberCoordinator 实例。
+
+对于 remoteMember ，则是去建立与各个实例之间的连接，最后返回 remoteMemberCoordinator 实例。
+
+    return CompletableFuture.allOf(futures)
+        .thenRun(() -> cluster.addMembershipListener(this::handleMembershipEvent))
+        .thenComposeAsync(v -> cluster.open(), executor)
+        .thenComposeAsync(v -> context.open(), executor)
+        .thenRun(() -> open = true)
+        .thenApply(v -> this);
+
+再看返回的内容， `allOf(futures)` 表明等待所有的连接建立完成，然后，添加处理 membership event 的 handleMembershipEvent 方法，它主要维护 members 信息，当一个 member 加入时，如果该 member 不在 members 中，那么将该 member 加入到 members ；当一个 member 离开时，则在 members 中去除该 member 。
 
 
 
