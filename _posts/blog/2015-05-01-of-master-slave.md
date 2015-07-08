@@ -4,8 +4,74 @@ title:      ONOS OpenFlow控制器主备角色分析
 category: blog
 description: 当交换机连接控制器集群后，控制器会进行选举，以便为交换机选举一个Master角色的控制器。
 ---
+
+
 什么情况会触发主备角色分配？
 当一个交换机连接之后，同时与几个控制器连接，换句话说，主备角色选举是在哪几个控制器中选举的？
+candidateMap 初始化，
+
+    candidateMap = storageService.<String, List<NodeId>>consistentMapBuilder()
+            .withName("onos-topic-candidates")
+            .withSerializer(SERIALIZER)
+            .withPartitionsDisabled().build();
+
+    candidateMap.addListener(event -> {
+        log.debug("Received {}", event);
+        if (event.type() != MapEvent.Type.INSERT && event.type() != MapEvent.Type.UPDATE) {
+            log.error("Entries must not be removed from candidate map");
+            return;
+        }
+        onLeadershipEvent(new LeadershipEvent(
+                LeadershipEvent.Type.CANDIDATES_CHANGED,
+                new Leadership(event.key(),
+                        event.value().value(),
+                        event.value().version(),
+                        event.value().creationTime())));
+    });
+
+    private void onLeadershipEvent(LeadershipEvent leadershipEvent) {
+        log.trace("Leadership Event: time = {} type = {} event = {}",
+                leadershipEvent.time(), leadershipEvent.type(),
+                leadershipEvent);
+
+        Leadership leadershipUpdate = leadershipEvent.subject();
+        LeadershipEvent.Type eventType = leadershipEvent.type();
+        String topic = leadershipUpdate.topic();
+
+        AtomicBoolean updateAccepted = new AtomicBoolean(false);
+        if (eventType.equals(LeadershipEvent.Type.LEADER_ELECTED)) {
+            leaderBoard.compute(topic, (k, currentLeadership) -> {
+                if (currentLeadership == null || currentLeadership.epoch() < leadershipUpdate.epoch()) {
+                    updateAccepted.set(true);
+                    return leadershipUpdate;
+                }
+                return currentLeadership;
+            });
+        } else if (eventType.equals(LeadershipEvent.Type.LEADER_BOOTED)) {
+            leaderBoard.compute(topic, (k, currentLeadership) -> {
+                if (currentLeadership == null || currentLeadership.epoch() <= leadershipUpdate.epoch()) {
+                    updateAccepted.set(true);
+                    // FIXME: Removing entries from leaderboard is not safe and should be visited.
+                    return null;
+                }
+                return currentLeadership;
+            });
+        } else if (eventType.equals(LeadershipEvent.Type.CANDIDATES_CHANGED)) {
+            candidateBoard.compute(topic, (k, currentInfo) -> {
+                if (currentInfo == null || currentInfo.epoch() < leadershipUpdate.epoch()) {
+                    updateAccepted.set(true);
+                    return leadershipUpdate;
+                }
+                return currentInfo;
+            });
+        } else {
+            throw new IllegalStateException("Unknown event type.");
+        }
+
+        if (updateAccepted.get()) {
+            eventDispatcher.post(leadershipEvent);
+        }
+    }
 
 本篇博客首先介绍DeviceEvent的处理流程的例子，然后分析各个模块的含义，最后抽象事件处理流程。
 
