@@ -13,7 +13,7 @@ description: 当交换机连接控制器集群后，交换机同时连接多个�
 
 下面按照这三步展开  
 
-** 角色分配
+## 角色分配
 
 角色分配主要分为两步：第一步是形成候选人列表 candidateMap ，第二步是从候选人中选取 leader 。 
 
@@ -44,13 +44,13 @@ candidates 是一个 LinkList ，使用 stream 的好处是：直到最后一步
 
 总的来说，选取 leader 是根据 交换机连接控制器的顺序决定的，越先建立连接的控制器，优先级越高。而不是采用负载均衡的算法，不过做起来也比较简单。
 
-** 下发 OF 消息
+## 下发 OF 消息
 
 如果是 OF10 协议，则调用 RoleManager 的 sendNxRoleRequest 方法， 这里只有两种角色 Master 和 Other；如果是 OF13 协议，则调用  RoleManager 的 sendOF13RoleRequest 方法。注意，发送 OF_Role_Request 消息后，将 xid 和 role 放入 60 秒的缓存中，目的是检验 OF_Role_Reply 消息的正确性。
 
     pendingReplies.put(sendOF13RoleRequest(role), role);
 
-** 发布 DeviceEvent 
+## 发布 DeviceEvent 
 
 采用 gossip 协议将该 device 同步到其他节点，并且根据是否为 create 还是 update ，返回 DEVICE_ADDED 还是 DEVICE_UPDATED 事件，供上层 APP 进行处理。
 
