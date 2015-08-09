@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      ONOS 强一致性算法raft的java实现版copycat说明
+title:      copycat描述
 category: blog
 description: ONOS中强一致性算法采用的是raft，它包括leader选举、 Log replication 、 Cluster membership changes 、 Log compaction 这四个特性，copycat是raft这四个特性的java版实现。
 ---
