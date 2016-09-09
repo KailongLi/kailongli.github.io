@@ -19,6 +19,8 @@ description: 在介绍完leader election和 log replication这两个重要的特
 
 [entry_points in setup.cfg](http://stackoverflow.com/questions/774824/explain-python-entry-points)
 
+[entry_points demo](https://github.com/RichardBronosky/entrypoint_demo)
+
 研究setuptools中为何能够将setup.cfg的entrypoints中console_scripts的函数转化为命令，
 他跟files中的scripts有何区别？
 如果有多个python包使用了同一个命令，怎么解决冲突？。
