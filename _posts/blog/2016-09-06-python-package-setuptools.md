@@ -17,7 +17,15 @@ description: 在介绍完leader election和 log replication这两个重要的特
 
 [setup.cfg example](https://trac.stsci.edu/ssb/stsci_python/browser/sample_project/branches/irafx/trunk/setup.cfg.sample?rev=21893#L48)
 
+[entry_points in setup.cfg](http://stackoverflow.com/questions/774824/explain-python-entry-points)
 
+研究setuptools中为何能够将setup.cfg的entrypoints中console_scripts的函数转化为命令，
+他跟files中的scripts有何区别？
+如果有多个python包使用了同一个命令，怎么解决冲突？。
+
+[zsh](http://fendrich.se/blog/2012/09/28/no/)
+[oh my zsh](https://github.com/robbyrussell/oh-my-zsh)
+[Why Zsh is Cooler than Your Shell](http://www.slideshare.net/jaguardesignstudio/why-zsh-is-cooler-than-your-shell-16194692)
 
 ![replicate-state-machine-architecture](/images/githubpages/replicate-state-machine-architecture.png)
 
