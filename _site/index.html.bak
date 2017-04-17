@@ -33,9 +33,17 @@
 <p>最新文章</p>
 <ul>
 　　　　
-　　　　　　<li>01 May 2015 <a href="/of-master-slave">ONOS OpenFlow控制器主备角色分析</a></li>
+　　　　　　<li>06 Sep 2016 <a href="/python-package-setuptools">python编包工具setuptools</a></li>
 　　　　
-　　　　　　<li>01 May 2015 <a href="/distribute-features1">ONOS 分布式学习（一）</a></li>
+　　　　　　<li>12 Jul 2015 <a href="/how-to-use-copycat">ONOS 强一致性算法raft的java实现版copycat代码分析之整体介绍</a></li>
+　　　　
+　　　　　　<li>11 Jul 2015 <a href="/log-replication">ONOS 强一致性算法raft的java实现版copycat代码分析之log replication</a></li>
+　　　　
+　　　　　　<li>10 Jul 2015 <a href="/distribute-features1">ONOS 强一致性算法raft的java实现版copycat代码分析之leader election</a></li>
+　　　　
+　　　　　　<li>09 Jun 2015 <a href="/raft-copycat">copycat描述</a></li>
+　　　　
+　　　　　　<li>01 May 2015 <a href="/of-master-slave">ONOS OpenFlow控制器主备角色分析</a></li>
 　　　　
 　　　　　　<li>23 Apr 2015 <a href="/event-processing">ONOS 事件处理机制</a></li>
 　　　　
